@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import VideoCall from "@/components/video/VideoCall";
 
 export default function Home() {
   return (
@@ -24,14 +25,7 @@ export default function Home() {
         AI-generated feedback, in one room.
       </motion.p>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="text-sm text-[var(--color-accent)]"
-      >
-        Phase 0: foundation in progress.
-      </motion.p>
+      <VideoCall />
     </main>
   );
 }
