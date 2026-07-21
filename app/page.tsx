@@ -29,7 +29,7 @@ export default function Home() {
       <VideoCall />
 
       <div className="w-full max-w-2xl text-left">
-        <MonacoEditor onChange={(val) => console.log("editor changed:", val)} />
+        <MonacoEditor roomId="test-room" />
       </div>
     </main>
   );
