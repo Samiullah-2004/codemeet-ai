@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import VideoCall from "@/components/video/VideoCall";
+import MonacoEditor from "@/components/editor/MonacoEditor";
 
 export default function Home() {
   return (
@@ -26,6 +27,10 @@ export default function Home() {
       </motion.p>
 
       <VideoCall />
+
+      <div className="w-full max-w-2xl text-left">
+        <MonacoEditor onChange={(val) => console.log("editor changed:", val)} />
+      </div>
     </main>
   );
 }
