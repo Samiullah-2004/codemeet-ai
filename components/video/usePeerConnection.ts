@@ -7,7 +7,10 @@ const ICE_SERVERS = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-export function usePeerConnection(localStream: MediaStream | null, roomId: string) {
+export function usePeerConnection(
+  localStream: MediaStream | null,
+  roomId: string,
+) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [connectionState, setConnectionState] = useState<string>("new");
@@ -45,8 +48,8 @@ export function usePeerConnection(localStream: MediaStream | null, roomId: strin
       };
 
       // localStream is guaranteed non-null here since we checked above
-      localStream.getTracks().forEach((track) => {
-        pc.addTrack(track, localStream);
+      localStream!.getTracks().forEach((track) => {
+        pc.addTrack(track, localStream!);
       });
 
       pcRef.current = pc;
@@ -60,7 +63,11 @@ export function usePeerConnection(localStream: MediaStream | null, roomId: strin
       socket.emit("webrtc-offer", { roomId, offer });
     }
 
-    async function handleOffer({ offer }: { offer: RTCSessionDescriptionInit }) {
+    async function handleOffer({
+      offer,
+    }: {
+      offer: RTCSessionDescriptionInit;
+    }) {
       const pc = createPeerConnection();
       await pc.setRemoteDescription(offer);
       const answer = await pc.createAnswer();
@@ -68,12 +75,20 @@ export function usePeerConnection(localStream: MediaStream | null, roomId: strin
       socket.emit("webrtc-answer", { roomId, answer });
     }
 
-    async function handleAnswer({ answer }: { answer: RTCSessionDescriptionInit }) {
+    async function handleAnswer({
+      answer,
+    }: {
+      answer: RTCSessionDescriptionInit;
+    }) {
       const pc = pcRef.current;
       if (pc) await pc.setRemoteDescription(answer);
     }
 
-    async function handleIceCandidate({ candidate }: { candidate: RTCIceCandidateInit }) {
+    async function handleIceCandidate({
+      candidate,
+    }: {
+      candidate: RTCIceCandidateInit;
+    }) {
       const pc = pcRef.current;
       if (pc) await pc.addIceCandidate(candidate);
     }
