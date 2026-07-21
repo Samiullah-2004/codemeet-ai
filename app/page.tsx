@@ -26,7 +26,7 @@ export default function Home() {
         AI-generated feedback, in one room.
       </motion.p>
 
-      <VideoCall />
+      <VideoCall roomId="test-room" />
 
       <div className="w-full max-w-2xl text-left">
         <MonacoEditor roomId="test-room" />
