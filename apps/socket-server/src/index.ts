@@ -7,7 +7,7 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // tighten this to the real frontend URL once deployed
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -18,15 +18,36 @@ io.on("connection", (socket) => {
   socket.on("join-room", (roomId: string) => {
     socket.join(roomId);
     console.log(`${socket.id} joined room ${roomId}`);
+    // Tell everyone else in the room a new peer arrived
+    socket.to(roomId).emit("peer-joined", socket.id);
   });
 
+  // Code sync
   socket.on("code-change", ({ roomId, code }: { roomId: string; code: string }) => {
-    // Broadcast to everyone else in the room except the sender
     socket.to(roomId).emit("code-change", code);
+  });
+
+  // WebRTC signaling - just relay between peers, server doesn't touch the content
+  socket.on("webrtc-offer", ({ roomId, offer }: { roomId: string; offer: RTCSessionDescriptionInit }) => {
+    socket.to(roomId).emit("webrtc-offer", { offer, from: socket.id });
+  });
+
+  socket.on("webrtc-answer", ({ roomId, answer }: { roomId: string; answer: RTCSessionDescriptionInit }) => {
+    socket.to(roomId).emit("webrtc-answer", { answer, from: socket.id });
+  });
+
+  socket.on("webrtc-ice-candidate", ({ roomId, candidate }: { roomId: string; candidate: RTCIceCandidateInit }) => {
+    socket.to(roomId).emit("webrtc-ice-candidate", { candidate, from: socket.id });
   });
 
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
+  });
+
+  // Chat
+  socket.on("chat-message", ({ roomId, message, sender }: { roomId: string; message: string; sender: string }) => {
+    // Broadcast to everyone in the room including the sender
+    io.to(roomId).emit("chat-message", { message, sender, timestamp: Date.now() });
   });
 });
 

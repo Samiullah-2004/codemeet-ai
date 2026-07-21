@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import VideoCall from "@/components/video/VideoCall";
 import MonacoEditor from "@/components/editor/MonacoEditor";
+import ChatPanel from "@/components/chat/ChatPanel";
 
 export default function Home() {
   return (
@@ -30,6 +31,10 @@ export default function Home() {
 
       <div className="w-full max-w-2xl text-left">
         <MonacoEditor roomId="test-room" />
+      </div>
+
+      <div className="w-full max-w-2xl">
+        <ChatPanel roomId="test-room" username="user-1" />
       </div>
     </main>
   );
