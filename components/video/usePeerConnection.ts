@@ -1,92 +1,110 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { getSocket } from "@/lib/socket";
 
 const ICE_SERVERS = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-export function usePeerConnection(localStream: MediaStream | null) {
+export function usePeerConnection(
+  localStream: MediaStream | null,
+  roomId: string,
+) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [connectionState, setConnectionState] = useState<string>("new");
 
-  function ensurePeerConnection() {
-    if (pcRef.current) return pcRef.current;
+  useEffect(() => {
+    // Don't set up signaling until we have the local stream
+    if (!localStream) return;
 
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const socket = getSocket();
 
-    pc.ontrack = (event) => {
-      setRemoteStream((prev) => {
-        const stream = prev ?? new MediaStream();
-        stream.addTrack(event.track);
-        return stream;
+    function createPeerConnection(): RTCPeerConnection {
+      if (pcRef.current) return pcRef.current;
+
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+
+      pc.ontrack = (event) => {
+        setRemoteStream((prev) => {
+          const stream = prev ?? new MediaStream();
+          stream.addTrack(event.track);
+          return stream;
+        });
+      };
+
+      pc.onconnectionstatechange = () => {
+        setConnectionState(pc.connectionState);
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("webrtc-ice-candidate", {
+            roomId,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      // localStream is guaranteed non-null here since we checked above
+      localStream!.getTracks().forEach((track) => {
+        pc.addTrack(track, localStream!);
       });
-    };
 
-    pc.onconnectionstatechange = () => {
-      setConnectionState(pc.connectionState);
-    };
-
-    // Send our local camera/mic tracks to the other side
-    localStream?.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream);
-    });
-
-    pcRef.current = pc;
-    return pc;
-  }
-
-  // Waits until ICE gathering finishes so the offer/answer we copy-paste
-  // includes all network candidates in one shot, no manual candidate exchange.
-function waitForIceGatheringComplete(pc: RTCPeerConnection, timeoutMs = 2000): Promise<void> {
-  if (pc.iceGatheringState === "complete") return Promise.resolve();
-
-  return new Promise((resolve) => {
-    let done = false;
-
-    function finish() {
-      if (done) return;
-      done = true;
-      pc.removeEventListener("icegatheringstatechange", check);
-      resolve();
+      pcRef.current = pc;
+      return pc;
     }
 
-    function check() {
-      if (pc.iceGatheringState === "complete") finish();
+    async function handlePeerJoined() {
+      const pc = createPeerConnection();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit("webrtc-offer", { roomId, offer });
     }
 
-    pc.addEventListener("icegatheringstatechange", check);
+    async function handleOffer({
+      offer,
+    }: {
+      offer: RTCSessionDescriptionInit;
+    }) {
+      const pc = createPeerConnection();
+      await pc.setRemoteDescription(offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit("webrtc-answer", { roomId, answer });
+    }
 
-    // Don't wait forever, a couple seconds of gathering is enough
-    // for a STUN-based connection in almost all cases.
-    setTimeout(finish, timeoutMs);
-  });
-}
+    async function handleAnswer({
+      answer,
+    }: {
+      answer: RTCSessionDescriptionInit;
+    }) {
+      const pc = pcRef.current;
+      if (pc) await pc.setRemoteDescription(answer);
+    }
 
-  async function createOffer(): Promise<string> {
-    const pc = ensurePeerConnection();
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await waitForIceGatheringComplete(pc);
-    return JSON.stringify(pc.localDescription);
-  }
+    async function handleIceCandidate({
+      candidate,
+    }: {
+      candidate: RTCIceCandidateInit;
+    }) {
+      const pc = pcRef.current;
+      if (pc) await pc.addIceCandidate(candidate);
+    }
 
-  async function createAnswer(remoteOfferJson: string): Promise<string> {
-    const pc = ensurePeerConnection();
-    const offer = JSON.parse(remoteOfferJson);
-    await pc.setRemoteDescription(offer);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    await waitForIceGatheringComplete(pc);
-    return JSON.stringify(pc.localDescription);
-  }
+    socket.on("peer-joined", handlePeerJoined);
+    socket.on("webrtc-offer", handleOffer);
+    socket.on("webrtc-answer", handleAnswer);
+    socket.on("webrtc-ice-candidate", handleIceCandidate);
 
-  async function acceptAnswer(remoteAnswerJson: string) {
-    const pc = ensurePeerConnection();
-    const answer = JSON.parse(remoteAnswerJson);
-    await pc.setRemoteDescription(answer);
-  }
+    return () => {
+      socket.off("peer-joined", handlePeerJoined);
+      socket.off("webrtc-offer", handleOffer);
+      socket.off("webrtc-answer", handleAnswer);
+      socket.off("webrtc-ice-candidate", handleIceCandidate);
+    };
+  }, [localStream, roomId]);
 
-  return { remoteStream, connectionState, createOffer, createAnswer, acceptAnswer };
+  return { remoteStream, connectionState };
 }

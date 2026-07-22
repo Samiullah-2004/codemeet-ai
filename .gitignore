@@ -1,41 +1,41 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies (unanchored, catches node_modules at any depth, root or nested apps/*)
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Environment files, never commit secrets
+.env
+.env*.local
 
-# testing
-/coverage
-
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
-/build
+# Build outputs (unanchored, catches dist/ in socket-server, lambdas, etc too)
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
+# OS files
+.DS_Store
+Thumbs.db
 
-# vercel
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Vercel (unused here, but harmless to keep)
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# AWS / infra local state
+infra/**/*.pem
+infra/**/.terraform/
