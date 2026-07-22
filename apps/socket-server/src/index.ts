@@ -44,6 +44,12 @@ io.on("connection", (socket) => {
     console.log(`Client disconnected: ${socket.id}`);
   });
 
+  socket.on("check-room", (roomId: string, callback: (participantCount: number) => void) => {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    const count = room ? room.size : 0;
+    callback(count);
+  });
+
   // Chat
   socket.on("chat-message", ({ roomId, message, sender }: { roomId: string; message: string; sender: string }) => {
     // Broadcast to everyone in the room including the sender
