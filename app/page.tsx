@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { generateRoomId } from "@/lib/roomId";
 import { isValidRoomId } from "@/lib/validateRoomId";
 
 export default function Home() {
@@ -13,9 +12,21 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
   const [role, setRole] = useState<"recruiter" | "candidate">("recruiter");
 
-  function createSession() {
+  async function createSession() {
     if (!username.trim()) return;
-    const roomId = generateRoomId();
+
+    const res = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recruiterName: username }),
+    });
+
+    if (!res.ok) {
+      setJoinError("Failed to create session. Try again.");
+      return;
+    }
+
+    const { roomId } = await res.json();
     router.push(`/session/${roomId}?username=${encodeURIComponent(username)}&role=${role}`);
   }
 
@@ -69,8 +80,8 @@ export default function Home() {
           <button
             onClick={() => setRole("recruiter")}
             className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${role === "recruiter"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
+              ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
+              : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
               }`}
           >
             Recruiter
@@ -78,8 +89,8 @@ export default function Home() {
           <button
             onClick={() => setRole("candidate")}
             className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${role === "candidate"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
+              ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
+              : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
               }`}
           >
             Candidate
