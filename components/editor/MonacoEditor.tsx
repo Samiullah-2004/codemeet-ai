@@ -19,10 +19,9 @@ export default function MonacoEditor({
   const isRemoteChange = useRef(false);
 
   useEffect(() => {
-    const socket = getSocket();
-    socket.emit("join-room", roomId);
+  const socket = getSocket();
 
-    function handleRemoteChange(code: string) {
+  function handleRemoteChange(code: string) {
       const editor = editorRef.current;
       if (!editor) return;
 

@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "jest"
+    "test": "jest",
+    "db:create-tables": "tsx scripts/create-tables.ts",
+    "db:test": "tsx scripts/test-sessions.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1085.0",
+    "@aws-sdk/lib-dynamodb": "^3.1076.0",
     "@monaco-editor/react": "^4.7.0",
     "motion": "^12.42.2",
     "next": "16.2.10",
@@ -29,6 +33,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

@@ -1,24 +1,31 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSocket } from "@/lib/socket";
 
 const ICE_SERVERS = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-export function usePeerConnection(
-  localStream: MediaStream | null,
-  roomId: string,
-) {
+export function usePeerConnection(localStream: MediaStream | null, roomId: string) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const pendingActionRef = useRef<(() => void) | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [connectionState, setConnectionState] = useState<string>("new");
 
+  // Keep a ref in sync with the latest stream, and run anything that was
+  // waiting on it becoming ready (see waitForStreamThen below).
   useEffect(() => {
-    // Don't set up signaling until we have the local stream
-    if (!localStream) return;
+    localStreamRef.current = localStream;
+    if (localStream && pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      action();
+    }
+  }, [localStream]);
 
+  useEffect(() => {
     const socket = getSocket();
 
     function createPeerConnection(): RTCPeerConnection {
@@ -40,55 +47,66 @@ export function usePeerConnection(
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          socket.emit("webrtc-ice-candidate", {
-            roomId,
-            candidate: event.candidate,
-          });
+          socket.emit("webrtc-ice-candidate", { roomId, candidate: event.candidate });
         }
       };
 
-      // localStream is guaranteed non-null here since we checked above
-      localStream!.getTracks().forEach((track) => {
-        pc.addTrack(track, localStream!);
+      localStreamRef.current?.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current!);
       });
 
       pcRef.current = pc;
       return pc;
     }
 
-    async function handlePeerJoined() {
-      const pc = createPeerConnection();
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit("webrtc-offer", { roomId, offer });
+    // If the local camera/mic isn't ready yet, defer the action instead
+    // of dropping it, runs automatically once localStream becomes ready.
+    function waitForStreamThen(action: () => void) {
+      if (localStreamRef.current) {
+        action();
+      } else {
+        pendingActionRef.current = action;
+      }
     }
 
-    async function handleOffer({
-      offer,
-    }: {
-      offer: RTCSessionDescriptionInit;
-    }) {
-      const pc = createPeerConnection();
-      await pc.setRemoteDescription(offer);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit("webrtc-answer", { roomId, answer });
+    function handlePeerJoined() {
+      waitForStreamThen(async () => {
+        const pc = createPeerConnection();
+        if (pc.signalingState !== "stable") {
+          console.warn("Skipping duplicate offer, already negotiating:", pc.signalingState);
+          return;
+        }
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("webrtc-offer", { roomId, offer });
+      });
     }
 
-    async function handleAnswer({
-      answer,
-    }: {
-      answer: RTCSessionDescriptionInit;
-    }) {
+    function handleOffer({ offer }: { offer: RTCSessionDescriptionInit }) {
+      waitForStreamThen(async () => {
+        const pc = createPeerConnection();
+        if (pc.signalingState !== "stable") {
+          console.warn("Ignoring offer, connection not in stable state:", pc.signalingState);
+          return;
+        }
+        await pc.setRemoteDescription(offer);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("webrtc-answer", { roomId, answer });
+      });
+    }
+
+    async function handleAnswer({ answer }: { answer: RTCSessionDescriptionInit }) {
       const pc = pcRef.current;
-      if (pc) await pc.setRemoteDescription(answer);
+      if (!pc) return;
+      if (pc.signalingState !== "have-local-offer") {
+        console.warn("Ignoring unexpected answer, state:", pc.signalingState);
+        return;
+      }
+      await pc.setRemoteDescription(answer);
     }
 
-    async function handleIceCandidate({
-      candidate,
-    }: {
-      candidate: RTCIceCandidateInit;
-    }) {
+    async function handleIceCandidate({ candidate }: { candidate: RTCIceCandidateInit }) {
       const pc = pcRef.current;
       if (pc) await pc.addIceCandidate(candidate);
     }
@@ -103,8 +121,14 @@ export function usePeerConnection(
       socket.off("webrtc-offer", handleOffer);
       socket.off("webrtc-answer", handleAnswer);
       socket.off("webrtc-ice-candidate", handleIceCandidate);
+
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      pendingActionRef.current = null;
     };
-  }, [localStream, roomId]);
+  }, [roomId]);
 
   return { remoteStream, connectionState };
 }

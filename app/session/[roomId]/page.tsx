@@ -22,14 +22,31 @@ function SessionRoom() {
 
   useEffect(() => {
     const socket = getSocket();
+
     const timer = setTimeout(() => {
       socket.emit("check-room", roomId, (count: number) => {
         setIsAlone(count <= 1);
       });
     }, 4000);
 
-    return () => clearTimeout(timer);
+    // Also clear the banner immediately the moment someone actually joins,
+    // instead of waiting for the next timed check.
+    function handlePeerJoined() {
+      setIsAlone(false);
+    }
+
+    socket.on("peer-joined", handlePeerJoined);
+
+    return () => {
+      clearTimeout(timer);
+      socket.off("peer-joined", handlePeerJoined);
+    };
   }, [roomId]);
+  
+  useEffect(() => {
+  const socket = getSocket();
+  socket.emit("join-room", roomId);
+}, [roomId]);
 
   return (
     <div className="flex flex-col h-screen bg-[var(--background)] overflow-hidden">

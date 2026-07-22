@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { getSocket } from "@/lib/socket";
 import { usePeerConnection } from "./usePeerConnection";
 
 interface VideoCallProps {
@@ -21,16 +20,17 @@ export default function VideoCall({ roomId }: VideoCallProps) {
     let stream: MediaStream;
 
     async function startLocalMedia() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setLocalStream(stream);
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-        // Join the room once media is ready
-        const socket = getSocket();
-        socket.emit("join-room", roomId);
-      } catch {
-        setError("Could not access camera or microphone. Check browser permissions.");
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    setLocalStream(stream);
+    if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+  } catch (err) {
+        console.error("getUserMedia failed:", err);
+        setError(
+          err instanceof DOMException
+            ? `Could not access camera/mic: ${err.name} - ${err.message}`
+            : "Could not access camera or microphone. Check browser permissions."
+        );
       }
     }
 
