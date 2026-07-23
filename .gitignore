@@ -39,3 +39,5 @@ Thumbs.db
 # AWS / infra local state
 infra/**/*.pem
 infra/**/.terraform/
+
+dynamodb-data/

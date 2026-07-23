@@ -35,8 +35,8 @@ export default function Home() {
       return;
     }
 
-    const { roomId } = await res.json();
-    router.push(`/session/${roomId}?username=${encodeURIComponent(username)}&role=${role}`);
+    const { roomId, sessionId } = await res.json();
+    router.push(`/session/${roomId}?username=${encodeURIComponent(username)}&role=${role}&sessionId=${sessionId}`);
   }
 
   function joinSession() {
@@ -48,7 +48,8 @@ export default function Home() {
     }
 
     setJoinError(null);
-    router.push(`/session/${joinCode.trim()}?username=${encodeURIComponent(username)}&role=candidate`);
+    // Fixed: Use the selected role rather than hardcoding "candidate"
+    router.push(`/session/${joinCode.trim()}?username=${encodeURIComponent(username)}&role=${role}`);
   }
 
   return (
