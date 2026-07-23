@@ -4,7 +4,7 @@ import { generateRoomId } from "@/lib/roomId";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { recruiterName } = body;
+  const { recruiterName, problemId } = body;
 
   if (!recruiterName || typeof recruiterName !== "string") {
     return NextResponse.json({ error: "recruiterName is required" }, { status: 400 });
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     sessionId,
     roomId,
     recruiterName,
+    problemId: problemId || undefined,
     status: "waiting",
     createdAt: Date.now(),
   });

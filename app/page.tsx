@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { isValidRoomId } from "@/lib/validateRoomId";
@@ -11,6 +11,15 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [role, setRole] = useState<"recruiter" | "candidate">("recruiter");
+  const [problems, setProblems] = useState<{ problemId: string; title: string }[]>([]);
+  const [selectedProblemId, setSelectedProblemId] = useState("");
+
+  useEffect(() => {
+    fetch("/api/problems")
+      .then((res) => res.json())
+      .then((data) => setProblems(data.problems ?? []))
+      .catch(() => setProblems([]));
+  }, []);
 
   async function createSession() {
     if (!username.trim()) return;
@@ -18,7 +27,7 @@ export default function Home() {
     const res = await fetch("/api/sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recruiterName: username }),
+      body: JSON.stringify({ recruiterName: username, problemId: selectedProblemId || undefined }),
     });
 
     if (!res.ok) {
@@ -96,6 +105,21 @@ export default function Home() {
             Candidate
           </button>
         </div>
+
+        {role === "recruiter" && (
+          <select
+            value={selectedProblemId}
+            onChange={(e) => setSelectedProblemId(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+          >
+            <option value="">No problem selected</option>
+            {problems.map((p) => (
+              <option key={p.problemId} value={p.problemId}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.02 }}

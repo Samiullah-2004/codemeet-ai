@@ -6,6 +6,7 @@ export interface Session {
   roomId: string;
   recruiterName: string;
   candidateName?: string;
+  problemId?: string;
   status: "waiting" | "active" | "ended";
   createdAt: number;
   endedAt?: number;

@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "jest",
     "db:create-tables": "tsx scripts/create-tables.ts",
-    "db:test": "tsx scripts/test-sessions.ts"
+    "db:test": "tsx scripts/test-sessions.ts",
+    "db:seed": "tsx scripts/seed-problems.ts",
+    "db:test-problems": "tsx scripts/test-problems.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1085.0",
