@@ -1,4 +1,5 @@
-const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+const GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export interface FeedbackResult {
   summary: string;
@@ -12,8 +13,8 @@ export async function getCodeFeedback(
   problemTitle: string,
   problemDescription: string
 ): Promise<FeedbackResult> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set");
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
   const prompt = `You are a senior software engineer reviewing a candidate's code during a technical interview.
 
@@ -33,29 +34,31 @@ Respond ONLY with a JSON object in this exact format, no markdown, no extra text
   "score": 7
 }`;
 
-  const res = await fetch(DEEPSEEK_API_URL, {
+  const res = await fetch(GEMINI_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "x-goog-api-key": apiKey,
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 500,
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
     }),
   });
 
   if (!res.ok) {
-    throw new Error(`DeepSeek API error: ${res.status}`);
+    const errorBody = await res.text();
+    throw new Error(`Gemini API error: ${res.status} - ${errorBody}`);
   }
 
   const data = await res.json();
-  const text = data.choices[0].message.content as string;
+  const text = data.candidates[0].content.parts[0].text as string;
 
   try {
     return JSON.parse(text) as FeedbackResult;
   } catch {
-    throw new Error(`Failed to parse DeepSeek response: ${text}`);
+    throw new Error(`Failed to parse Gemini response: ${text}`);
   }
 }

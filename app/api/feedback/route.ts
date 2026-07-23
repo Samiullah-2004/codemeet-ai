@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCodeFeedback } from "@/lib/deepseek";
+import { getCodeFeedback } from "@/lib/gemini";
 import { getSession } from "@/lib/sessions";
 import { getProblem } from "@/lib/problems";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
