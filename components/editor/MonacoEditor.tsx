@@ -8,20 +8,22 @@ interface MonacoEditorProps {
   roomId: string;
   defaultValue?: string;
   language?: string;
+  onCodeChange?: (code: string) => void;
 }
 
 export default function MonacoEditor({
   roomId,
   defaultValue = "// Start coding here\n",
   language = "javascript",
+  onCodeChange,
 }: MonacoEditorProps) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const isRemoteChange = useRef(false);
 
   useEffect(() => {
-  const socket = getSocket();
+    const socket = getSocket();
 
-  function handleRemoteChange(code: string) {
+    function handleRemoteChange(code: string) {
       const editor = editorRef.current;
       if (!editor) return;
 
@@ -45,12 +47,10 @@ export default function MonacoEditor({
 
   function handleChange(value: string | undefined) {
     if (isRemoteChange.current) {
-      // This change came from the server, not the local user typing,
-      // skip broadcasting it back out.
       isRemoteChange.current = false;
       return;
     }
-
+    onCodeChange?.(value ?? "");
     const socket = getSocket();
     socket.emit("code-change", { roomId, code: value ?? "" });
   }

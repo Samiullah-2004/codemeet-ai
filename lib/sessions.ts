@@ -10,6 +10,12 @@ export interface Session {
   status: "waiting" | "active" | "ended";
   createdAt: number;
   endedAt?: number;
+  feedback?: {
+    summary: string;
+    strengths: string[];
+    improvements: string[];
+    score: number;
+  };
 }
 
 export async function createSession(session: Session): Promise<void> {
