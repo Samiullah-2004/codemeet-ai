@@ -80,7 +80,7 @@ function SessionRoom() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)] bg-black/30 backdrop-blur-sm"
+        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b border-[var(--border-subtle)] bg-black/30 backdrop-blur-sm"
       >
         <span className="text-sm font-bold tracking-tight">
           CodeMeet <span className="text-[var(--color-accent)]">AI</span>
@@ -193,13 +193,13 @@ function SessionRoom() {
       </AnimatePresence>
 
       {/* Main layout */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left: editor */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="flex-1 p-3 overflow-hidden"
+          className="flex-1 p-3 min-h-[400px] lg:min-h-0"
         >
           <div className="terminal-window h-full flex flex-col">
             <div className="terminal-titlebar">
@@ -222,7 +222,7 @@ function SessionRoom() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-          className="w-80 flex flex-col gap-3 p-3 pl-0 overflow-y-auto"
+          className="w-full lg:w-80 flex flex-col gap-3 p-3 lg:pl-0"
         >
           <div className="terminal-window">
             <div className="terminal-titlebar">
