@@ -1,18 +1,24 @@
-// Next.js 16: use proxy.ts instead of middleware.ts.
-// middleware.ts runs on the Edge Runtime, which breaks Prisma/pg and
-// some Node-only packages we'll pull in later (NextAuth adapters, etc).
-// proxy.ts runs on the Node runtime instead, avoiding that class of bug.
-//
-// This stub currently does nothing. It will grow route-protection logic
-// in Phase 6 (recruiter vs candidate dashboard access).
-
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function proxy(_request: NextRequest) {
+export default auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/signup");
+  const isProtectedPage = req.nextUrl.pathname.startsWith("/session");
+
+  // Logged in users shouldn't see login/signup again
+  if (isLoggedIn && isAuthPage) {
+    return NextResponse.redirect(new URL("/", req.nextUrl));
+  }
+
+  // Session rooms require login
+  if (!isLoggedIn && isProtectedPage) {
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
+  }
+
   return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: [],
+  matcher: ["/session/:path*", "/login", "/signup"],
 };
