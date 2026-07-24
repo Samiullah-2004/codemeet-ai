@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0e17;
-  --foreground: #e2e8f0;
+  --background: #060a12;
+  --surface: #0d1420;
+  --foreground: #e6edf5;
+  --border-subtle: rgba(59, 130, 246, 0.15);
+  --border-strong: rgba(59, 130, 246, 0.35);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-accent: #3b82f6;
   --color-accent-dim: #1d4ed8;
+  --color-accent-glow: rgba(59, 130, 246, 0.35);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 html {
@@ -19,7 +24,88 @@ html {
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59, 130, 246, 0.12), transparent),
+    var(--background);
   color: var(--foreground);
   min-height: 100vh;
+}
+
+/* Subtle tech-grid backdrop, used on full-page sections */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glass-tech card surface */
+.tech-card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+.tech-card:hover {
+  border-color: var(--border-strong);
+}
+
+/* Glow effect for primary actions/accents */
+.glow-accent {
+  box-shadow: 0 0 20px -4px var(--color-accent-glow);
+}
+
+/* Monospace label style, used for tags like room codes, roles */
+.mono-tag {
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+/* Terminal window chrome */
+.terminal-window {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Sleek button variants, no heavy fill */
+.btn-primary {
+  background: var(--color-accent);
+  color: #000;
+  font-weight: 500;
+  border: 1px solid var(--color-accent);
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 24px -4px var(--color-accent-glow);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--color-accent);
+  background: rgba(59, 130, 246, 0.05);
 }

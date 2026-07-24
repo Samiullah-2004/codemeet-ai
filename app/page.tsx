@@ -2,42 +2,38 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { isValidRoomId } from "@/lib/validateRoomId";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Home() {
   const router = useRouter();
   const [joinError, setJoinError] = useState<string | null>(null);
-const [usernameOverride, setUsernameOverride] = useState<string | null>(null);
-const [joinCode, setJoinCode] = useState("");
-const [roleOverride, setRoleOverride] = useState<"recruiter" | "candidate" | null>(null);
-const [problems, setProblems] = useState<{ problemId: string; title: string }[]>([]);
-const [selectedProblemId, setSelectedProblemId] = useState("");
-const { data: session, status } = useSession();
+  const [usernameOverride, setUsernameOverride] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [roleOverride, setRoleOverride] = useState<"recruiter" | "candidate" | null>(null);
+  const [problems, setProblems] = useState<{ problemId: string; title: string }[]>([]);
+  const [selectedProblemId, setSelectedProblemId] = useState("");
+  const { data: session, status } = useSession();
 
-useEffect(() => {
-  fetch("/api/problems")
-    .then((res) => res.json())
-    .then((data) => setProblems(data.problems ?? []))
-    .catch(() => setProblems([]));
-}, []);
+  useEffect(() => {
+    fetch("/api/problems")
+      .then((res) => res.json())
+      .then((data) => setProblems(data.problems ?? []))
+      .catch(() => setProblems([]));
+  }, []);
 
-// Derive the displayed name/role from the session by default, but let
-// the user's own typing/clicking override it. No effect needed, this
-// is computed fresh on every render instead of synced via setState.
-const sessionRole = (session?.user as { role?: string } | undefined)?.role;
-const username = usernameOverride ?? session?.user?.name ?? "";
-const role: "recruiter" | "candidate" =
-  roleOverride ?? (sessionRole === "recruiter" || sessionRole === "candidate" ? sessionRole : "recruiter");
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+  const username = usernameOverride ?? session?.user?.name ?? "";
+  const role: "recruiter" | "candidate" =
+    roleOverride ?? (sessionRole === "recruiter" || sessionRole === "candidate" ? sessionRole : "recruiter");
 
-function setUsername(value: string) {
-  setUsernameOverride(value);
-}
-
-function setRole(value: "recruiter" | "candidate") {
-  setRoleOverride(value);
-}
+  function setUsername(value: string) {
+    setUsernameOverride(value);
+  }
+  function setRole(value: "recruiter" | "candidate") {
+    setRoleOverride(value);
+  }
 
   async function createSession() {
     if (!username.trim()) return;
@@ -70,21 +66,32 @@ function setRole(value: "recruiter" | "candidate") {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-6 p-8 py-16 bg-[var(--background)] relative">
+    <main className="grid-bg flex flex-1 flex-col items-center gap-8 p-8 py-20 relative overflow-hidden">
       {session && (
-        <button
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="absolute top-4 right-4 text-xs text-[var(--foreground)]/50 hover:text-[var(--foreground)]"
+          className="absolute top-6 right-6 text-xs font-mono text-[var(--foreground)]/40 hover:text-[var(--color-accent)] transition-colors"
         >
-          Log out
-        </button>
+          [ log out ]
+        </motion.button>
       )}
+
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--border-subtle)] text-[10px] font-mono text-[var(--color-accent)] mono-tag"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
+        LIVE INTERVIEW PLATFORM
+      </motion.div>
 
       <motion.h1
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="text-3xl font-bold text-[var(--foreground)]"
+        transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
+        className="text-4xl sm:text-5xl font-bold text-center tracking-tight"
       >
         CodeMeet <span className="text-[var(--color-accent)]">AI</span>
       </motion.h1>
@@ -92,129 +99,177 @@ function setRole(value: "recruiter" | "candidate") {
       <motion.p
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-        className="max-w-md text-center text-[var(--foreground)]/70"
+        transition={{ duration: 0.5, delay: 0.12, ease: "easeOut" }}
+        className="max-w-md text-center text-[var(--foreground)]/60 text-sm leading-relaxed"
       >
-        Real-time technical interview platform. Video, shared code editor, and AI-generated feedback in one room.
+        Video, a live-synced code editor, and AI-generated feedback,{" "}
+        <span className="font-mono text-[var(--color-accent)]/80">in one room</span>.
       </motion.p>
 
       {status === "loading" && (
-        <p className="text-sm text-[var(--foreground)]/50">Loading...</p>
+        <p className="text-sm font-mono text-[var(--foreground)]/40">loading_session...</p>
       )}
 
-      {status === "unauthenticated" && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="flex flex-col gap-3 w-full max-w-sm text-center"
-        >
-          <p className="text-sm text-[var(--foreground)]/70">
-            Log in or create an account to start or join a session.
-          </p>
-          <a
-            href="/login"
-            className="w-full py-2 rounded-md bg-[var(--color-accent)] text-black text-sm font-medium text-center"
+      <AnimatePresence mode="wait">
+        {status === "unauthenticated" && (
+          <motion.div
+            key="unauth"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="terminal-window w-full max-w-sm"
           >
-            Log In
-          </a>
-          <a
-            href="/signup"
-            className="w-full py-2 rounded-md border border-[var(--color-accent-dim)] text-sm text-center"
+            <div className="terminal-titlebar">
+              <span className="terminal-dot bg-red-500/70" />
+              <span className="terminal-dot bg-yellow-500/70" />
+              <span className="terminal-dot bg-green-500/70" />
+              <span className="ml-2 text-[10px] font-mono text-[var(--foreground)]/40">auth.sh</span>
+            </div>
+            <div className="flex flex-col gap-3 p-6">
+              <p className="text-xs font-mono text-[var(--foreground)]/50">
+                <span className="text-[var(--color-accent)]">$</span> auth --required
+              </p>
+              <p className="text-sm text-[var(--foreground)]/70">
+                Log in or create an account to start or join a session.
+              </p>
+              <motion.a
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                href="/login"
+                className="btn-primary w-full py-2.5 rounded-md text-sm text-center"
+              >
+                Log In
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                href="/signup"
+                className="btn-ghost w-full py-2.5 rounded-md text-sm text-center"
+              >
+                Sign Up
+              </motion.a>
+            </div>
+          </motion.div>
+        )}
+
+        {status === "authenticated" && (
+          <motion.div
+            key="auth"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="terminal-window w-full max-w-sm"
           >
-            Sign Up
-          </a>
-        </motion.div>
-      )}
-
-      {status === "authenticated" && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="flex flex-col gap-3 w-full max-w-sm"
-        >
-          <input
-            type="text"
-            placeholder="Your name"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
-          />
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setRole("recruiter")}
-              className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${role === "recruiter"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
-                }`}
-            >
-              Recruiter
-            </button>
-            <button
-              onClick={() => setRole("candidate")}
-              className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${role === "candidate"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
-                }`}
-            >
-              Candidate
-            </button>
-          </div>
-
-          {role === "recruiter" && (
-            <select
-              value={selectedProblemId}
-              onChange={(e) => setSelectedProblemId(e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
-            >
-              <option value="">No problem selected</option>
-              {problems.map((p) => (
-                <option key={p.problemId} value={p.problemId}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={createSession}
-            className="w-full py-2 rounded-md bg-[var(--color-accent)] text-black text-sm font-medium"
-          >
-            Create Session
-          </motion.button>
-
-          <div className="flex items-center gap-2 text-[var(--foreground)]/30 text-xs">
-            <div className="flex-1 h-px bg-[var(--foreground)]/10" />
-            or join existing
-            <div className="flex-1 h-px bg-[var(--foreground)]/10" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex gap-2">
+            <div className="terminal-titlebar">
+              <span className="terminal-dot bg-red-500/70" />
+              <span className="terminal-dot bg-yellow-500/70" />
+              <span className="terminal-dot bg-green-500/70" />
+              <span className="ml-2 text-[10px] font-mono text-[var(--foreground)]/40">new-session.sh</span>
+            </div>
+            <div className="flex flex-col gap-3 p-6">
               <input
                 type="text"
-                placeholder="Room code"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+                placeholder="Your name"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
               />
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setRole("recruiter")}
+                  className={`flex-1 py-2 rounded-md text-sm font-medium border transition-all ${
+                    role === "recruiter"
+                      ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)] glow-accent"
+                      : "border-[var(--border-subtle)] text-[var(--foreground)]/60 hover:border-[var(--border-strong)]"
+                  }`}
+                >
+                  Recruiter
+                </button>
+                <button
+                  onClick={() => setRole("candidate")}
+                  className={`flex-1 py-2 rounded-md text-sm font-medium border transition-all ${
+                    role === "candidate"
+                      ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)] glow-accent"
+                      : "border-[var(--border-subtle)] text-[var(--foreground)]/60 hover:border-[var(--border-strong)]"
+                  }`}
+                >
+                  Candidate
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {role === "recruiter" && (
+                  <motion.select
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    value={selectedProblemId}
+                    onChange={(e) => setSelectedProblemId(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+                  >
+                    <option value="">No problem selected</option>
+                    {problems.map((p) => (
+                      <option key={p.problemId} value={p.problemId}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </motion.select>
+                )}
+              </AnimatePresence>
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={joinSession}
-                className="px-4 py-2 rounded-md border border-[var(--color-accent-dim)] text-sm"
+                onClick={createSession}
+                className="btn-primary w-full py-2.5 rounded-md text-sm mt-1"
               >
-                Join
+                Create Session
               </motion.button>
+
+              <div className="flex items-center gap-2 text-[var(--foreground)]/25 text-[10px] font-mono uppercase tracking-wider">
+                <div className="flex-1 h-px bg-[var(--border-subtle)]" />
+                or join existing
+                <div className="flex-1 h-px bg-[var(--border-subtle)]" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="room-code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="flex-1 px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm font-mono outline-none focus:border-[var(--color-accent)] transition-colors"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={joinSession}
+                    className="btn-ghost px-5 py-2.5 rounded-md text-sm"
+                  >
+                    Join
+                  </motion.button>
+                </div>
+                <AnimatePresence>
+                  {joinError && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-xs text-red-400"
+                    >
+                      {joinError}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-            {joinError && <p className="text-xs text-red-400">{joinError}</p>}
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
