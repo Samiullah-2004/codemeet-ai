@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "CodeMeet AI",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="antialiased">
-      <body className="min-h-screen flex flex-col font-sans">{children}</body>
+      <body className="min-h-screen flex flex-col font-sans">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
