@@ -51,7 +51,7 @@ export default function ChatPanel({ roomId, username }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex flex-col h-[420px] w-full rounded-lg border border-[var(--color-accent-dim)] bg-black/30">
+    <div className="flex flex-col h-[350px] w-full">
       {/* Message list */}
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
         <AnimatePresence initial={false}>

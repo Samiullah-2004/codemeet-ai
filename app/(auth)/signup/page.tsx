@@ -37,7 +37,6 @@ export default function SignupPage() {
       return;
     }
 
-    // Auto sign-in after successful signup
     const result = await signIn("credentials", {
       email,
       password,
@@ -55,82 +54,94 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8 bg-[var(--background)]">
+    <main className="grid-bg flex flex-1 flex-col items-center justify-center gap-8 p-8">
       <motion.h1
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold text-[var(--foreground)]"
+        className="text-3xl font-bold tracking-tight"
       >
-        Create your account
+        Create <span className="text-[var(--color-accent)]">account</span>
       </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex flex-col gap-3 w-full max-w-sm"
+        className="terminal-window w-full max-w-sm"
       >
-        <input
-          type="text"
-          placeholder="Full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-white/5 border border-[var(--color-accent-dim)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
-        />
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setRole("recruiter")}
-            className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-              role === "recruiter"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
-            }`}
-          >
-            Recruiter
-          </button>
-          <button
-            onClick={() => setRole("candidate")}
-            className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-              role === "candidate"
-                ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)]"
-                : "border-[var(--color-accent-dim)] text-[var(--foreground)]/60"
-            }`}
-          >
-            Candidate
-          </button>
+        <div className="terminal-titlebar">
+          <span className="terminal-dot bg-red-500/70" />
+          <span className="terminal-dot bg-yellow-500/70" />
+          <span className="terminal-dot bg-green-500/70" />
+          <span className="ml-2 text-[10px] font-mono text-[var(--foreground)]/40">signup.sh</span>
         </div>
+        <div className="flex flex-col gap-3 p-6">
+          <p className="text-xs font-mono text-[var(--foreground)]/50">
+            <span className="text-[var(--color-accent)]">$</span> signup --new-user
+          </p>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+          <input
+            type="text"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-md bg-black/30 border border-[var(--border-subtle)] text-sm outline-none focus:border-[var(--color-accent)] transition-colors"
+          />
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="w-full py-2 rounded-md bg-[var(--color-accent)] text-black text-sm font-medium disabled:opacity-50"
-        >
-          {isSubmitting ? "Creating account..." : "Sign Up"}
-        </motion.button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setRole("recruiter")}
+              className={`flex-1 py-2 rounded-md text-sm font-medium border transition-all ${
+                role === "recruiter"
+                  ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)] glow-accent"
+                  : "border-[var(--border-subtle)] text-[var(--foreground)]/60 hover:border-[var(--border-strong)]"
+              }`}
+            >
+              Recruiter
+            </button>
+            <button
+              onClick={() => setRole("candidate")}
+              className={`flex-1 py-2 rounded-md text-sm font-medium border transition-all ${
+                role === "candidate"
+                  ? "bg-[var(--color-accent)] text-black border-[var(--color-accent)] glow-accent"
+                  : "border-[var(--border-subtle)] text-[var(--foreground)]/60 hover:border-[var(--border-strong)]"
+              }`}
+            >
+              Candidate
+            </button>
+          </div>
 
-        <p className="text-xs text-center text-[var(--foreground)]/50">
-          Already have an account?{" "}
-          <a href="/login" className="text-[var(--color-accent)]">Log in</a>
-        </p>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="btn-primary w-full py-2.5 rounded-md text-sm disabled:opacity-50"
+          >
+            {isSubmitting ? "Creating account..." : "Sign Up"}
+          </motion.button>
+
+          <p className="text-xs text-center text-[var(--foreground)]/50">
+            Already have an account?{" "}
+            <a href="/login" className="text-[var(--color-accent)]">Log in</a>
+          </p>
+        </div>
       </motion.div>
     </main>
   );

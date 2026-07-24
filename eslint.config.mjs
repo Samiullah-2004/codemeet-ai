@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // apps/socket-server is a separate Node project with its own tsconfig
+    // and build output, not part of the Next.js app's lint scope.
+    "apps/socket-server/**",
   ]),
 ]);
 

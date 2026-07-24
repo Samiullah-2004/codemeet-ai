@@ -3,7 +3,9 @@
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useEffect, useRef } from "react";
 import { getSocket } from "@/lib/socket";
+import { configureMonacoLoader } from "@/lib/monacoLoader";
 
+configureMonacoLoader();
 interface MonacoEditorProps {
   roomId: string;
   defaultValue?: string;
